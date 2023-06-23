@@ -9,8 +9,8 @@ from user.views import CreateUserView, SelfUserProfileView
 app_name = "user"
 
 urlpatterns = [
-    path("", CreateUserView.as_view(), name="create_profile"),
-    path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
-    path("me/", SelfUserProfileView.as_view(), name="my_profile"),
+    path("", CreateUserView.as_view(), name="create-profile"),
+    path("token/", TokenObtainPairView.as_view(), name="token-obtain-pair"),
+    path("token/refresh/", TokenRefreshView.as_view(), name="token-refresh"),
+    path("me/", SelfUserProfileView.as_view(), name="my-profile"),
 ]
