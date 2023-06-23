@@ -3,8 +3,6 @@ from rest_framework import serializers
 
 
 class UserSerializer(serializers.ModelSerializer):
-    followers = serializers.SerializerMethodField()
-
     class Meta:
         model = get_user_model()
         fields = (
