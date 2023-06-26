@@ -13,7 +13,15 @@ class IsAdminOrIfAuthenticatedReadOnly(BasePermission):
         )
 
 
-class IsOwnerOrAdminOrReadOnly(BasePermission):
+class IsAdminOrIfAnonReadOnly(IsAdminOrIfAuthenticatedReadOnly):
+    def has_permission(self, request, view):
+        return bool(
+            (request.method in SAFE_METHODS and request.user)
+            or (request.user and request.user.is_staff)
+        )
+
+
+class IsOwnerOrAdminOrReadOnly(IsAdminOrIfAuthenticatedReadOnly):
     """
     Custom permission to only allow owners or admins to edit it
     """
