@@ -30,7 +30,7 @@ from borrowing.views import BorrowingViewSet
 
 router = routers.DefaultRouter()
 router.register("books", BookViewSet)
-router.register("borrowing", BorrowingViewSet)
+router.register("borrowing", BorrowingViewSet, basename="borrowing")
 
 
 urlpatterns = [

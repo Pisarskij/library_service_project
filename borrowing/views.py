@@ -1,4 +1,6 @@
 from rest_framework import viewsets, mixins, serializers
+
+from rest_framework.permissions import IsAuthenticated
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
@@ -10,7 +12,13 @@ class BorrowingViewSet(
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
-    queryset = Borrowing.objects.all()
+    permission_classes = (IsAuthenticated,)
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Borrowing.objects.all()
+        return Borrowing.objects.filter(user_id=user.id)
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "update", "partial_update"]:
