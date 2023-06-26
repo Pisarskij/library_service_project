@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
-
-from .serializers import Borrowing, BorrowingSerializer
+from .models import Borrowing
+from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
 
 class BorrowingViewSet(
@@ -11,4 +11,8 @@ class BorrowingViewSet(
     viewsets.GenericViewSet,
 ):
     queryset = Borrowing.objects.all()
-    serializer_class = BorrowingSerializer
+
+    def get_serializer_class(self):
+        if self.action in ["retrieve", "update", "partial_update"]:
+            return BorrowingDetailSerializer
+        return BorrowingListSerializer
