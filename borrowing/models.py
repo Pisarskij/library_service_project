@@ -33,13 +33,12 @@ def manage_book_inventory(sender, instance, **kwargs):
     except ObjectDoesNotExist:
         # This is a new borrowing, so decrease the book inventory.
         instance.book_id.decrease_inventory()
-        return
     else:
-        # This is an existing borrowing.
         # Check if the actual return date has been set.
         if not obj.actual_return_date and instance.actual_return_date:
             # The book was returned, so increase the book inventory.
             instance.book_id.increase_inventory()
-            return
-        # If is a don`t new borrowing but book again was borrowing
-        instance.book_id.decrease_inventory()
+            # Check is an existing borrowing.
+        elif obj.actual_return_date and not instance.actual_return_date:
+            # If is a don`t new borrowing but book again was borrowing
+            instance.book_id.decrease_inventory()
