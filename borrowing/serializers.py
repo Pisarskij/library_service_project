@@ -1,5 +1,7 @@
 # serializers.py
 from rest_framework import serializers
+
+from book.serializers import BookSerializer
 from .models import Borrowing
 
 
@@ -17,6 +19,8 @@ class BorrowingListSerializer(serializers.ModelSerializer):
 
 
 class BorrowingDetailSerializer(BorrowingListSerializer):
+    book_id = BookSerializer(read_only=True)
+
     class Meta:
         model = Borrowing
         fields = [
