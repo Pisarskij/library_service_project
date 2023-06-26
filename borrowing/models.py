@@ -23,7 +23,7 @@ class Borrowing(models.Model):
     )
 
     def __str__(self):
-        return self.borrow_date
+        return str(self.borrow_date)
 
 
 @receiver(pre_save, sender=Borrowing)
@@ -41,4 +41,5 @@ def manage_book_inventory(sender, instance, **kwargs):
             # The book was returned, so increase the book inventory.
             instance.book_id.increase_inventory()
             return
+        # If is a don`t new borrowing but book again was borrowing
         instance.book_id.decrease_inventory()
