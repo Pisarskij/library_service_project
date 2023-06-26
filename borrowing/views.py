@@ -1,6 +1,6 @@
 from rest_framework import viewsets, mixins
 
-from .serializers import Borrowing
+from .serializers import Borrowing, BorrowingSerializer
 
 
 class BorrowingViewSet(
@@ -11,4 +11,4 @@ class BorrowingViewSet(
     viewsets.GenericViewSet,
 ):
     queryset = Borrowing.objects.all()
-    serializer_class = Borrowing
+    serializer_class = BorrowingSerializer

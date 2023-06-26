@@ -23,11 +23,19 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
     SpectacularRedocView,
 )
+from rest_framework import routers
+
+from book.views import BookViewSet
+from borrowing.views import BorrowingViewSet
+
+router = routers.DefaultRouter()
+router.register("books", BookViewSet)
+router.register("borrowing", BorrowingViewSet)
+
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("api/", include("book.urls", namespace="book")),
-    path("api/", include("borrowing.urls", namespace="borrowing")),
+    path("api/", include(router.urls)),
     path("api/users/", include("user.urls", namespace="user")),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path(
