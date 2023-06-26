@@ -20,7 +20,7 @@ class Book(models.Model):
 
     def decrease_inventory(
         self,
-    ):  # TODO: реализовать логику отнимание книг из библиотеки
+    ):
         if self.inventory > 0:
             self.inventory -= 1
             self.save()
@@ -29,6 +29,6 @@ class Book(models.Model):
 
     def increase_inventory(
         self,
-    ):  # TODO: реализовать логику добавления книг из библиотеки
+    ):
         self.inventory += 1
         self.save()
