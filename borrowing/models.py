@@ -23,7 +23,7 @@ class Borrowing(models.Model):
     )
 
     def __str__(self):
-        return {self.user_id.email}
+        return self.borrow_date
 
 
 @receiver(pre_save, sender=Borrowing)
@@ -33,9 +33,12 @@ def manage_book_inventory(sender, instance, **kwargs):
     except ObjectDoesNotExist:
         # This is a new borrowing, so decrease the book inventory.
         instance.book_id.decrease_inventory()
+        return
     else:
         # This is an existing borrowing.
         # Check if the actual return date has been set.
         if not obj.actual_return_date and instance.actual_return_date:
             # The book was returned, so increase the book inventory.
             instance.book_id.increase_inventory()
+            return
+        instance.book_id.decrease_inventory()
