@@ -1,6 +1,7 @@
 from typing import Optional
 
 from django.utils.functional import lazy
+from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, mixins, serializers
 
 from rest_framework.permissions import IsAuthenticated
@@ -55,3 +56,20 @@ class BorrowingViewSet(
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
         serializer.save(user_id=self.request.user)
+
+    @extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "user_id",
+                type={"type": "int", "items": {"type": "number"}},
+                description="Filter by user id (ex. ?user_id=2)",
+            ),
+            OpenApiParameter(
+                "is_active",
+                type={"type": "bool", "format": "bool"},
+                description="Filter by is_active (ex. ?is_active=true)",
+            ),
+        ]
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
