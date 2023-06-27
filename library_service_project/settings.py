@@ -156,6 +156,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "user.permissions.IsAdminOrIfAuthenticatedReadOnly",
     ],
+    "DEFAULT_PAGINATION_CLASS": "library_service_project.pagination.OrderPagination",
 }
 
 SPECTACULAR_SETTINGS = {
