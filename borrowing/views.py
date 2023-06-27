@@ -1,12 +1,12 @@
-from typing import Optional
-
-from django.utils.functional import lazy
+from django_q.tasks import async_task
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 from rest_framework import viewsets, mixins, serializers
 
 from rest_framework.permissions import IsAuthenticated
+
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
+from .tasks import send_message
 
 
 class BorrowingViewSet(
@@ -55,7 +55,15 @@ class BorrowingViewSet(
         book = serializer.validated_data["book_id"]
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
-        serializer.save(user_id=self.request.user)
+        borrowing = serializer.save(user_id=self.request.user)
+        async_task(
+            send_message,
+            f"Borrowing №{borrowing.id} was created.\n"
+            f"Book name: {book.title}\n"
+            f"Borrowing date: {borrowing.borrow_date}\n"
+            f"Return date: {borrowing.expected_return_date}\n"
+            f"Daily fee: {book.daily_fee}$\n",
+        )
 
     @extend_schema(
         parameters=[
