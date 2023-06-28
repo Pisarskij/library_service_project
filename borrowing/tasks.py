@@ -1,6 +1,10 @@
 from aiogram import Bot
 import os
 from asgiref.sync import async_to_sync
+from django.utils import timezone
+from django_q.tasks import async_task
+
+from borrowing.models import Borrowing
 
 bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
@@ -11,3 +15,22 @@ async def async_send_message(text: str):
 
 def send_message(text: str):
     async_to_sync(async_send_message)(text)
+
+
+def check_borrowing_overdue():
+    now = timezone.now().date()
+    overdue_borrowings = Borrowing.objects.filter(
+        actual_return_date=None, expected_return_date__lt=now
+    )
+    if overdue_borrowings:
+        for borrowing in overdue_borrowings:
+            text = (
+                f"User: {borrowing.user_id.email}\n"
+                f"You borrowing №{borrowing.id} is overdue!"
+                f"\nExpected return date: {borrowing.expected_return_date}"
+                f"\nActual date: {now}"
+            )
+            async_task(send_message, text)
+    else:
+        text = "No borrowings overdue today!"
+        async_task(send_message, text)
