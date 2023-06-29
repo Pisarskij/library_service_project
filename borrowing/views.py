@@ -56,6 +56,7 @@ class BorrowingViewSet(
         return BorrowingListSerializer
 
     def perform_create(self, serializer):
+        user = self.request.user
         book = serializer.validated_data["book_id"]
         daily_fee = serializer.validated_data["book_id"].daily_fee
         expected_return_date = serializer.validated_data["expected_return_date"]
@@ -66,6 +67,13 @@ class BorrowingViewSet(
 
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
+
+            # Check if user already has an active borrowing
+        active_borrowings = Borrowing.objects.filter(
+            user_id=user.id, actual_return_date__isnull=True
+        )
+        if active_borrowings.exists():
+            raise serializers.ValidationError("User already has an active borrowing")
 
         borrowing = serializer.save(user_id=self.request.user)
 
