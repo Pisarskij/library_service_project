@@ -1,12 +1,17 @@
-from django_q.tasks import async_task
+import stripe
+
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, mixins, serializers
 
+from datetime import date
+
+from rest_framework import viewsets, mixins, serializers, status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
+from library_service_project import settings
+from payment.models import Payment
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
-from .tasks import send_message
 
 
 class BorrowingViewSet(
@@ -51,19 +56,55 @@ class BorrowingViewSet(
         return BorrowingListSerializer
 
     def perform_create(self, serializer):
-        """Set the user for the object"""
         book = serializer.validated_data["book_id"]
+        daily_fee = serializer.validated_data["book_id"].daily_fee
+        expected_return_date = serializer.validated_data["expected_return_date"]
+        today = date.today()
+        days_difference = (expected_return_date - today).days
+
+        money_to_pay = int((daily_fee * 100) * days_difference)
+
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
+
         borrowing = serializer.save(user_id=self.request.user)
-        async_task(
-            send_message,
-            f"Borrowing №{borrowing.id} was created.\n"
-            f"Book name: {book.title}\n"
-            f"Borrowing date: {borrowing.borrow_date}\n"
-            f"Return date: {borrowing.expected_return_date}\n"
-            f"Daily fee: {book.daily_fee}$\n",
+
+        # Create Payment with session_url and session_id
+        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+        session = stripe.checkout.Session.create(
+            success_url="https://127.0.0.1/success",
+            cancel_url="https://127.0.0.1/cancel",
+            payment_method_types=["card"],
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {
+                            "name": str(book.title),
+                        },
+                        "unit_amount": money_to_pay,
+                    },
+                    "quantity": 1,
+                },
+            ],
+            mode="payment",
         )
+
+        # Save Payment with Borrowing and session details
+        Payment.objects.create(
+            borrowing_id=borrowing,
+            money_to_pay=money_to_pay,
+            session_url=session.url,
+            session_id=session.id,
+        )
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        self.perform_create(serializer)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
         parameters=[

@@ -23,7 +23,7 @@ class Borrowing(models.Model):
     )
 
     def __str__(self):
-        return str(self.borrow_date)
+        return f"№ {self.id} - {self.borrow_date}"
 
 
 @receiver(pre_save, sender=Borrowing)
