@@ -27,10 +27,12 @@ from rest_framework import routers
 
 from book.views import BookViewSet
 from borrowing.views import BorrowingViewSet
+from payment.views import PaymentViewSet
 
 router = routers.DefaultRouter()
 router.register("books", BookViewSet)
 router.register("borrowing", BorrowingViewSet, basename="borrowing")
+router.register("payment", PaymentViewSet, basename="payment")
 
 
 urlpatterns = [
@@ -49,5 +51,5 @@ urlpatterns = [
         name="redoc",
     ),
     path("__debug__/", include("debug_toolbar.urls")),
-    # path("stripe/", include("djstripe.urls", namespace="djstripe")),
+    path("stripe/", include("djstripe.urls", namespace="djstripe")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
