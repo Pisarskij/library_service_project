@@ -10,6 +10,7 @@ from rest_framework.response import Response
 
 from library_service_project import settings
 from payment.models import Payment
+from payment.session import create_stripe_session
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
@@ -57,11 +58,23 @@ class BorrowingViewSet(
 
     def perform_create(self, serializer):
         user = self.request.user
+
+        # get Book.title
         book = serializer.validated_data["book_id"]
+
+        # get Book.daily_fee
         daily_fee = serializer.validated_data["book_id"].daily_fee
+
+        # get expected_return_date
         expected_return_date = serializer.validated_data["expected_return_date"]
         today = date.today()
+
+        # get differences between expected_return_date and today
         days_difference = (expected_return_date - today).days
+        if days_difference < 1:
+            raise serializers.ValidationError(
+                "Expected return date must be in the future and minimum than 1 day"
+            )
 
         money_to_pay = int((daily_fee * 100) * days_difference)
 
@@ -77,34 +90,29 @@ class BorrowingViewSet(
 
         borrowing = serializer.save(user_id=self.request.user)
 
-        # Create Payment with session_url and session_id
-        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
-        session = stripe.checkout.Session.create(
-            success_url="https://127.0.0.1/success",
-            cancel_url="https://127.0.0.1/cancel",
-            payment_method_types=["card"],
-            line_items=[
-                {
-                    "price_data": {
-                        "currency": "usd",
-                        "product_data": {
-                            "name": str(book.title),
-                        },
-                        "unit_amount": money_to_pay,
-                    },
-                    "quantity": 1,
-                },
-            ],
-            mode="payment",
-        )
-
-        # Save Payment with Borrowing and session details
-        Payment.objects.create(
+        payment_instance = Payment.objects.create(
             borrowing_id=borrowing,
             money_to_pay=money_to_pay,
-            session_url=session.url,
-            session_id=session.id,
         )
+
+        # Create Payment with session_url and session_id
+        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+        try:
+            session = create_stripe_session(
+                book=book,
+                money_to_pay=money_to_pay,
+                borrowing=borrowing.id,
+                payment=payment_instance.id,
+            )
+        except stripe.error.InvalidRequestError:
+            raise serializers.ValidationError(
+                "Minimal amount to create payment link is: 0.5$"
+            )
+
+        # Save Payment with Borrowing and session details
+        payment_instance.session_url = session.url
+        payment_instance.session_id = session.id
+        payment_instance.save()
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
