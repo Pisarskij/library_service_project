@@ -58,15 +58,15 @@ class BorrowingViewSet(
 
     def perform_create(self, serializer):
         user = self.request.user
-
+        validated_data = serializer.validated_data
         # get Book.title
-        book = serializer.validated_data["book_id"]
+        book = validated_data["book_id"]
 
         # get Book.daily_fee
-        daily_fee = serializer.validated_data["book_id"].daily_fee
+        daily_fee = book.daily_fee
 
         # get expected_return_date
-        expected_return_date = serializer.validated_data["expected_return_date"]
+        expected_return_date = validated_data["expected_return_date"]
         today = date.today()
 
         # get differences between expected_return_date and today
@@ -99,9 +99,7 @@ class BorrowingViewSet(
         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
         try:
             session = create_stripe_session(
-                book=book,
                 money_to_pay=money_to_pay,
-                borrowing=borrowing.id,
                 payment=payment_instance.id,
             )
         except stripe.error.InvalidRequestError:
