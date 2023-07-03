@@ -28,6 +28,7 @@ from rest_framework import routers
 from book.views import BookViewSet
 from borrowing.views import BorrowingViewSet
 from payment.views import PaymentViewSet
+from payment.webhook import webhook
 
 router = routers.DefaultRouter()
 router.register("books", BookViewSet)
@@ -52,4 +53,5 @@ urlpatterns = [
     ),
     path("__debug__/", include("debug_toolbar.urls")),
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
+    path("webhook", webhook, name="webhook"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
