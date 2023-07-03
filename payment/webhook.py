@@ -1,4 +1,3 @@
-import json
 import stripe
 
 from django.http import JsonResponse
@@ -34,7 +33,7 @@ def webhook(request):
 
     # Handle the event
     event_type = event["type"]
-    if event_type == "payment_intent.succeeded":
+    if event_type == "checkout.session.completed":
         handle_payment_intent_succeeded(event)
     elif event_type == "payment_intent.payment_failed":
         handle_payment_intent_payment_failed(event)
@@ -47,16 +46,15 @@ def webhook(request):
 
 def handle_payment_intent_succeeded(event):
     payment_intent = event["data"]["object"]
-    borrowing_id = payment_intent["metadata"]["borrowing_id"]
-    payment_id = payment_intent["metadata"]["payment_id"]
+    instance_id = int(payment_intent["metadata"]["payment_id"])
 
     try:
-        payment = Payment.objects.get(id=payment_id)
-        payment.status = Payment.PaymentStatus.PAID
+        payment = Payment.objects.get(id=instance_id)
+        payment.status = Payment.PaymentStatusEnum.PAID
         payment.save()
-        print("Payment status updated to PAID:", payment_id)
+        print("Payment status updated to PAID:", instance_id)
     except Payment.DoesNotExist:
-        print("Payment with ID {} does not exist".format(payment_id))
+        print("Payment with ID {} does not exist".format(instance_id))
 
 
 def handle_payment_intent_payment_failed(event):
