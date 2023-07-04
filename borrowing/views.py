@@ -1,15 +1,14 @@
+from datetime import date
+
 import stripe
+from django.db import transaction
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
-
-from datetime import date
 
 from rest_framework import viewsets, mixins, serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from library_service_project import settings
-from payment.models import Payment
 from payment.session import create_stripe_session
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
@@ -60,57 +59,35 @@ class BorrowingViewSet(
     def perform_create(self, serializer):
         user = self.request.user
         validated_data = serializer.validated_data
-        # get Book.title
+        active_borrowings = Borrowing.objects.filter(
+            user_id=user.id, actual_return_date__isnull=True
+        )
+        today = date.today()
+        expected_return_date = validated_data["expected_return_date"]
+        days_difference = (expected_return_date - today).days
         book = validated_data["book_id"]
 
-        # get Book.daily_fee
-        daily_fee = book.daily_fee
+        if active_borrowings.exists():
+            raise serializers.ValidationError("User already has an active borrowing")
 
-        # get expected_return_date
-        expected_return_date = validated_data["expected_return_date"]
-        today = date.today()
-
-        # get differences between expected_return_date and today
-        days_difference = (expected_return_date - today).days
         if days_difference < 1:
             raise serializers.ValidationError(
                 "Expected return date must be in the future and minimum than 1 day"
             )
 
-        money_to_pay = int((daily_fee * 100) * days_difference)
-
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
 
-            # Check if user already has an active borrowing
-        active_borrowings = Borrowing.objects.filter(
-            user_id=user.id, actual_return_date__isnull=True
-        )
-        if active_borrowings.exists():
-            raise serializers.ValidationError("User already has an active borrowing")
-
-        borrowing = serializer.save(user_id=self.request.user)
-
-        payment_instance = Payment.objects.create(
-            borrowing_id=borrowing,
-            money_to_pay=money_to_pay,
-        )
-
-        # Create Payment with session_url and session_id
-        stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
         try:
-            session = create_stripe_session(
-                money_to_pay=money_to_pay,
-                payment=payment_instance.id,
-            )
-        except stripe.error.InvalidRequestError:
-            raise serializers.ValidationError(
-                "Minimal amount to create payment link is: 0.5$"
-            )
-        # Save Payment with Borrowing and session details
-        payment_instance.session_url = session.url
-        payment_instance.session_id = session.id
-        payment_instance.save()
+            with transaction.atomic():
+                borrowing = serializer.save(user_id=self.request.user)
+                create_stripe_session(
+                    borrowing=borrowing,
+                    days_difference=days_difference,
+                    book=book,
+                )
+        except stripe.error.InvalidRequestError as e:
+            raise serializers.ValidationError(e)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
