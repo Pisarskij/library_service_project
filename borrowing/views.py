@@ -49,6 +49,7 @@ class BorrowingViewSet(
             is_active = is_active_str.lower() == "true"
             queryset = queryset.filter(actual_return_date__isnull=is_active)
 
+        queryset = queryset.order_by("user_id")
         return queryset
 
     def get_serializer_class(self):
@@ -106,7 +107,6 @@ class BorrowingViewSet(
             raise serializers.ValidationError(
                 "Minimal amount to create payment link is: 0.5$"
             )
-
         # Save Payment with Borrowing and session details
         payment_instance.session_url = session.url
         payment_instance.session_id = session.id
