@@ -3,7 +3,22 @@ from rest_framework import serializers
 from payment.models import Payment
 
 
-class PaymentSerializer(serializers.ModelSerializer):
+class PaymentListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Payment
+        fields = [
+            "id",
+            "status",
+            "type",
+            "borrowing_id",
+            "money_to_pay",
+        ]
+        read_only_fields = [
+            "money_to_pay",
+        ]
+
+
+class PaymentDetailSerializer(PaymentListSerializer):
     class Meta:
         model = Payment
         fields = [
@@ -15,4 +30,8 @@ class PaymentSerializer(serializers.ModelSerializer):
             "session_id",
             "money_to_pay",
         ]
-        read_only_fields = ["session_url", "session_id"]
+        read_only_fields = [
+            "session_url",
+            "session_id",
+            "money_to_pay",
+        ]

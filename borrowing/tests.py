@@ -1,5 +1,4 @@
 from django.test import TestCase
-from django.core.exceptions import ValidationError
 from book.models import Book
 from user.models import User
 from borrowing.models import Borrowing

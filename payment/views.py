@@ -3,7 +3,7 @@ from rest_framework import viewsets
 from rest_framework import mixins
 
 from payment.models import Payment
-from payment.serializers import PaymentSerializer
+from payment.serializers import PaymentListSerializer, PaymentDetailSerializer
 from payment.session import check_stripe_session
 
 
@@ -14,7 +14,11 @@ class PaymentViewSet(
     viewsets.GenericViewSet,
 ):
     queryset = Payment.objects.all()
-    serializer_class = PaymentSerializer
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return PaymentDetailSerializer
+        return PaymentListSerializer
 
     def get_object(self):
         payment_pk = self.kwargs["pk"]
