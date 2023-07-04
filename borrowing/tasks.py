@@ -1,3 +1,4 @@
+from _decimal import Decimal
 from aiogram import Bot
 import os
 from asgiref.sync import async_to_sync
@@ -5,6 +6,7 @@ from django.utils import timezone
 from django_q.tasks import async_task
 
 from borrowing.models import Borrowing
+from payment.models import Payment
 
 bot = Bot(token=os.getenv("TELEGRAM_BOT_TOKEN"))
 
@@ -24,11 +26,14 @@ def check_borrowing_overdue():
     )
     if overdue_borrowings:
         for borrowing in overdue_borrowings:
+            payments = Payment.objects.get(borrowing_id=borrowing.id)
+            money_to_pay = Decimal(payments.money_to_pay / 100)
+
             text = (
                 f"User: {borrowing.user_id.email}\n"
                 f"You borrowing №{borrowing.id} is overdue!"
                 f"\nExpected return date: {borrowing.expected_return_date}"
-                f"\nActual date: {now}"
+                f"\nTo paid: {money_to_pay}$"
             )
             async_task(send_message, text)
     else:
