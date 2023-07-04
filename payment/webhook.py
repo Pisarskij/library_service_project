@@ -35,8 +35,6 @@ def webhook(request):
     event_type = event["type"]
     if event_type == "checkout.session.completed":
         handle_payment_intent_succeeded(event)
-    elif event_type == "payment_intent.payment_failed":
-        handle_payment_intent_payment_failed(event)
     else:
         # Handle other event types
         print("Unhandled event type {}".format(event_type))
@@ -55,9 +53,3 @@ def handle_payment_intent_succeeded(event):
         print("Payment status updated to PAID:", instance_id)
     except Payment.DoesNotExist:
         print("Payment with ID {} does not exist".format(instance_id))
-
-
-def handle_payment_intent_payment_failed(event):
-    # TODO: Implement your logic for handling failed payment intents
-    payment_intent = event["data"]["object"]
-    print("Payment intent failed:", payment_intent["id"])
