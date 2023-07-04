@@ -14,10 +14,9 @@ def create_stripe_session(
 ):
     check_session = check_stripe_session(session)
     if not check_session or session is None:
-        borrowing = Borrowing.objects.get(payments=payment)
         session = stripe.checkout.Session.create(
-            success_url=f"http://127.0.0.1:8000/api/borrowing/{borrowing.id}/",
-            cancel_url="http://127.0.0.1:8000/api/",
+            success_url=f"http://127.0.0.1:8000/api/payment/{payment}/",
+            cancel_url=f"http://127.0.0.1:8000/api/payment/{payment}/",
             payment_method_types=["card"],
             line_items=[
                 {
