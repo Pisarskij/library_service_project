@@ -11,8 +11,8 @@ class Payment(models.Model):
         PAID = 1, "paid"
 
     class PaymentTypeEnum(models.IntegerChoices):
-        PAYMENT = 1, "payment"
-        FINE = 0, "fine"
+        PAYMENT = 0, "payment"
+        FINE = 1, "fine"
 
     status = EnumField(PaymentStatusEnum, null=True, blank=True, default=0)
     type = EnumField(PaymentTypeEnum, null=True, blank=True, default=0)
