@@ -4,7 +4,7 @@ from rest_framework import mixins
 
 from payment.models import Payment
 from payment.serializers import PaymentListSerializer, PaymentDetailSerializer
-from payment.session import check_stripe_session
+from payment.session import check_stripe_data
 
 
 class PaymentViewSet(
@@ -22,6 +22,6 @@ class PaymentViewSet(
 
     def get_object(self):
         payment_pk = self.kwargs["pk"]
+        check_stripe_data(payment_pk)
         payment = get_object_or_404(Payment, pk=payment_pk)
-        check_stripe_session(payment_pk)
         return payment
