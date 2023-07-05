@@ -9,7 +9,7 @@ from rest_framework import viewsets, mixins, serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-from payment.session import create_stripe_session
+from payment.session import create_stripe_session, get_days_difference
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
@@ -62,24 +62,18 @@ class BorrowingViewSet(
         active_borrowings = Borrowing.objects.filter(
             user_id=user.id, actual_return_date__isnull=True
         )
-        today = date.today()
-        expected_return_date = validated_data["expected_return_date"]
-        days_difference = (expected_return_date - today).days
         book = validated_data["book_id"]
 
         if active_borrowings.exists():
             raise serializers.ValidationError("User already has an active borrowing")
-
-        if days_difference < 1:
-            raise serializers.ValidationError(
-                "Expected return date must be in the future and minimum than 1 day"
-            )
 
         if book.inventory <= 0:
             raise serializers.ValidationError("This book is currently out of inventory")
 
         try:
             with transaction.atomic():
+                data = validated_data["expected_return_date"]
+                days_difference = get_days_difference(data=data)
                 borrowing = serializer.save(user_id=self.request.user)
                 create_stripe_session(
                     borrowing=borrowing,
