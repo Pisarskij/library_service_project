@@ -77,24 +77,24 @@ def check_session_status(session_id=None):
     return None
 
 
-def check_stripe_data(payment_id=None):
-    if payment_id is not None:
-        try:
-            payment = Payment.objects.get(id=payment_id)
-            session_id = payment.session_id
-            status = check_session_status(session_id)
+def check_stripe_data(payment_id):
+    status = None
+    payment = Payment.objects.get(id=payment_id)
+    try:
+        session_id = payment.session_id
+        status = check_session_status(session_id)
+    except stripe.error.InvalidRequestError as e:
+        print(e)
 
-            if status in ["open", "complete"]:
-                return
-            else:
-                data = payment.borrowing_id.expected_return_date
-                days_difference = get_days_difference(data=data)
-                book = Book.objects.get(id=payment.borrowing_id.book_id.id)
-                create_stripe_session(
-                    payment=payment,
-                    borrowing=payment.borrowing_id,
-                    book=book,
-                    days_difference=days_difference,
-                )
-        except stripe.error.InvalidRequestError as e2:
-            print(e2)
+    if status in ["open", "complete"]:
+        return
+    else:
+        data = payment.borrowing_id.expected_return_date
+        days_difference = get_days_difference(data=data)
+        book = Book.objects.get(id=payment.borrowing_id.book_id.id)
+        create_stripe_session(
+            payment=payment,
+            borrowing=payment.borrowing_id,
+            book=book,
+            days_difference=days_difference,
+        )
