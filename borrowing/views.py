@@ -7,6 +7,7 @@ from rest_framework import viewsets, mixins, serializers, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from payment.models import Payment
 from payment.session import create_stripe_session, get_days_difference
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
@@ -57,12 +58,19 @@ class BorrowingViewSet(
     def perform_create(self, serializer):
         user = self.request.user
         validated_data = serializer.validated_data
-        active_borrowings = Borrowing.objects.filter(
-            user_id=user.id, actual_return_date__isnull=True
+        payment_borrowings = Borrowing.objects.filter(
+            user_id_id=user.id,
         )
         book = validated_data["book_id"]
 
-        if active_borrowings.exists():
+        if payment_borrowings.filter(
+            borrowing_payments__status=Payment.PaymentStatusEnum.PENDING,
+        ):
+            raise serializers.ValidationError("User still not paid previous borrowing")
+
+        if payment_borrowings.filter(
+            actual_return_date__isnull=True,
+        ):
             raise serializers.ValidationError("User already has an active borrowing")
 
         if book.inventory <= 0:
@@ -86,7 +94,6 @@ class BorrowingViewSet(
         serializer.is_valid(raise_exception=True)
 
         self.perform_create(serializer)
-
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @extend_schema(
