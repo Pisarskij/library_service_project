@@ -17,7 +17,7 @@ class Payment(models.Model):
     status = EnumField(PaymentStatusEnum, null=True, blank=True, default=0)
     type = EnumField(PaymentTypeEnum, null=True, blank=True, default=0)
     borrowing_id = models.ForeignKey(
-        Borrowing, on_delete=models.CASCADE, related_name="payments"
+        Borrowing, on_delete=models.CASCADE, related_name="borrowing_payments"
     )
     session_url = models.URLField(blank=True, null=True)
     session_id = models.CharField(max_length=255)

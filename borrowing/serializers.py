@@ -6,7 +6,9 @@ from .models import Borrowing
 
 
 class BorrowingListSerializer(serializers.ModelSerializer):
-    payments = serializers.SlugRelatedField(many=True, read_only=True, slug_field="id")
+    borrowing_payments = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="id"
+    )
 
     class Meta:
         model = Borrowing
@@ -17,7 +19,7 @@ class BorrowingListSerializer(serializers.ModelSerializer):
             "actual_return_date",
             "book_id",
             "user_id",
-            "payments",
+            "borrowing_payments",
         ]
         read_only_fields = [
             "id",
@@ -27,7 +29,7 @@ class BorrowingListSerializer(serializers.ModelSerializer):
 
 class BorrowingDetailSerializer(BorrowingListSerializer):
     book_id = BookSerializer(read_only=True)
-    payments = PaymentListSerializer(many=True, read_only=True)
+    borrowing_payments = PaymentListSerializer(many=True, read_only=True)
 
     class Meta:
         model = Borrowing
@@ -38,7 +40,7 @@ class BorrowingDetailSerializer(BorrowingListSerializer):
             "actual_return_date",
             "book_id",
             "user_id",
-            "payments",
+            "borrowing_payments",
         ]
         read_only_fields = [
             "id",
