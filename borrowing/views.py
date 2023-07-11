@@ -1,5 +1,6 @@
 import stripe
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 
 from drf_spectacular.utils import extend_schema, OpenApiParameter
 
@@ -8,7 +9,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from payment.models import Payment
-from payment.session import create_stripe_session, get_days_difference
+from payment.session import create_stripe_session
 from .models import Borrowing
 from .serializers import BorrowingListSerializer, BorrowingDetailSerializer
 
@@ -58,17 +59,17 @@ class BorrowingViewSet(
     def perform_create(self, serializer):
         user = self.request.user
         validated_data = serializer.validated_data
-        payment_borrowings = Borrowing.objects.filter(
+        borrowings = Borrowing.objects.filter(
             user_id_id=user.id,
         )
         book = validated_data["book_id"]
 
-        if payment_borrowings.filter(
+        if borrowings.filter(
             borrowing_payments__status=Payment.PaymentStatusEnum.PENDING,
         ):
             raise serializers.ValidationError("User still not paid previous borrowing")
 
-        if payment_borrowings.filter(
+        if borrowings.filter(
             actual_return_date__isnull=True,
         ):
             raise serializers.ValidationError("User already has an active borrowing")
@@ -78,12 +79,9 @@ class BorrowingViewSet(
 
         try:
             with transaction.atomic():
-                data = validated_data["expected_return_date"]
-                days_difference = get_days_difference(data=data)
                 borrowing = serializer.save(user_id=self.request.user)
                 create_stripe_session(
                     borrowing=borrowing,
-                    days_difference=days_difference,
                     book=book,
                 )
         except stripe.error.InvalidRequestError as e:
@@ -95,6 +93,16 @@ class BorrowingViewSet(
 
         self.perform_create(serializer)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def get_object(self):
+        borrowing = get_object_or_404(Borrowing, pk=self.kwargs["pk"])
+        payment = borrowing.borrowing_payments.first()
+        book = borrowing.book_id
+
+        if payment:
+            return borrowing
+        create_stripe_session(borrowing=borrowing, book=book)
+        return borrowing
 
     @extend_schema(
         parameters=[

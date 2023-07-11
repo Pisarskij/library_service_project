@@ -1,6 +1,7 @@
 from datetime import timedelta, datetime, date
 
 import stripe
+from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
 
@@ -11,15 +12,19 @@ from payment.models import Payment
 stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
 
 
+def get_money_to_pay(daily_fee, days_difference):
+    return int((daily_fee * 100) * days_difference)
+
+
 def get_current_timestamp():
     current_time = datetime.now()
     expires_at = current_time + timedelta(hours=23)
     return int(expires_at.timestamp())
 
 
-def get_days_difference(data):
+def get_days_difference(expected_return_date):
     today = date.today()
-    days_difference = (data - today).days
+    days_difference = (expected_return_date - today).days
     if days_difference < 1:
         raise serializers.ValidationError(
             "Expected return date must be in the future and minimum than 1 day"
@@ -29,13 +34,17 @@ def get_days_difference(data):
 
 def create_stripe_session(
     borrowing,
-    book,
-    days_difference,
+    book=None,
     payment=None,
 ):
+    days_difference = get_days_difference(
+        expected_return_date=borrowing.expected_return_date
+    )
     expires_at_int = get_current_timestamp()
     daily_fee = book.daily_fee
-    money_to_pay = int((daily_fee * 100) * days_difference)
+    money_to_pay = get_money_to_pay(
+        daily_fee=daily_fee, days_difference=days_difference
+    )
 
     if payment is None:
         payment = Payment.objects.create(
@@ -63,7 +72,7 @@ def create_stripe_session(
         mode="payment",
         metadata={"payment_id": payment.id},
     )
-
+    payment.money_to_pay = money_to_pay
     payment.session_url = session.url
     payment.session_id = session.id
     payment.save()
@@ -79,7 +88,8 @@ def check_session_status(session_id=None):
 
 def check_stripe_data(payment_id):
     status = None
-    payment = Payment.objects.get(id=payment_id)
+    payment = get_object_or_404(Payment, pk=payment_id)
+    paid = Payment.PaymentStatusEnum.PAID
     try:
         session_id = payment.session_id
         status = check_session_status(session_id)
@@ -87,14 +97,14 @@ def check_stripe_data(payment_id):
         print(e)
 
     if status in ["open", "complete"]:
+        if status == "complete" and not payment.status == paid:
+            payment.status = paid
+            payment.save()
         return
     else:
-        data = payment.borrowing_id.expected_return_date
-        days_difference = get_days_difference(data=data)
         book = Book.objects.get(id=payment.borrowing_id.book_id.id)
         create_stripe_session(
             payment=payment,
             borrowing=payment.borrowing_id,
             book=book,
-            days_difference=days_difference,
         )

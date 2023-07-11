@@ -15,6 +15,8 @@ class PaymentListSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = [
             "money_to_pay",
+            "status",
+            "type",
         ]
 
 
