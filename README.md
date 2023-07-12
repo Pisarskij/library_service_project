@@ -19,7 +19,6 @@ pip install -r requirements.txt
 3. Create and apply the database migrations:
 
 ```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
@@ -35,19 +34,12 @@ brew install stripe/stripe-cli/stripe
 
 1. Create a `.env` file in the root directory of the project:
 
-```plaintext
-Django settings:
-SECRET_KEY=SECRET_KEY
-
-Telegram settings:
-TELEGRAM_BOT_TOKEN=TELEGRAM_BOT_TOKEN
-TELEGRAM_CHAT_ID=TELEGRAM_CHAT_ID
-
-Stripe settings:
-STRIPE_LIVE_SECRET_KEY=STRIPE_LIVE_SECRET_KEY
-STRIPE_TEST_SECRET_KEY=STRIPE_TEST_SECRET_KEY
-STRIPE_WEBHOOK_SECRET=STRIPE_WEBHOOK_SECRET
-```
+Explain variables in ".env":
+- SECRET_KEY can be generated [here](https://djecrety.ir). SECRET_KEY is need to safety work Django.
+- TELEGRAM_BOT_TOKEN & TELEGRAM_CHAT_ID you should take from [BotFather](https://t.me/botfather), after bot created.
+- STRIPE_LIVE_SECRET_KEY & STRIPE_TEST_SECRET_KEY you should take from [here](https://dashboard.stripe.com/test/dashboard). But first you need registrate
+  (STRIPE_LIVE_SECRET_KEY for testing don`t need, enough only set STRIPE_TEST_SECRET_KEY)
+- STRIPE_WEBHOOK_SECRET you should take from terminal after start Stripe CLI (in Usage, paragraph 3) .
 
 2. Replace the placeholder values (
 `SECRET_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `STRIPE_LIVE_SECRET_KEY`, `STRIPE_TEST_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
@@ -117,3 +109,4 @@ You can access these endpoints by appending them to the base URL of your API. Fo
 - Django Rest Framework documentation: [https://www.django-rest-framework.org/](https://www.django-rest-framework.org/)
 - Telegram Bot API documentation: [https://core.telegram.org/bots/api](https://core.telegram.org/bots/api)
 - Stripe API documentation: [https://stripe.com/docs/api](https://stripe.com/docs/api)
+- Telegram API documentation: [https://core.telegram.org/api](https://core.telegram.org/api)
