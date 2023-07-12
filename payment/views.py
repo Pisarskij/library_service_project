@@ -36,9 +36,15 @@ class PaymentViewSet(
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         borrowing_id = serializer.initial_data["borrowing_id"]
-        borrowing = Borrowing.objects.get(id=borrowing_id)
+        # Check Borrowing
+        try:
+            borrowing = Borrowing.objects.get(id=borrowing_id)
+        except Borrowing.DoesNotExist:
+            raise serializers.ValidationError(
+                f"Borrowing with pk<{borrowing_id}> does not exist"
+            )
         book = borrowing.book_id
-
+        # Check Borrowing.payment
         try:
             borrowing.borrowing_payments.get()
         except Payment.DoesNotExist:
