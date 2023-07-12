@@ -39,7 +39,7 @@ Explain variables in ".env":
 - TELEGRAM_BOT_TOKEN & TELEGRAM_CHAT_ID you should take from [BotFather](https://t.me/botfather), after bot created.
 - STRIPE_LIVE_SECRET_KEY & STRIPE_TEST_SECRET_KEY you should take from [here](https://dashboard.stripe.com/test/dashboard). But first you need registrate
   (STRIPE_LIVE_SECRET_KEY for testing don`t need, enough only set STRIPE_TEST_SECRET_KEY)
-- STRIPE_WEBHOOK_SECRET you should take from terminal after start Stripe CLI (in Usage, paragraph 3) .
+- STRIPE_WEBHOOK_SECRET you should take from terminal after start Stripe CLI (in Usage, paragraph 2) .
 
 2. Replace the placeholder values (
 `SECRET_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, `STRIPE_LIVE_SECRET_KEY`, `STRIPE_TEST_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
