@@ -43,8 +43,8 @@ class PaymentViewSet(
             borrowing.borrowing_payments.get()
         except Payment.DoesNotExist:
             serializer.is_valid(raise_exception=True)
-            test = self.perform_create(serializer)
-            create_stripe_session(borrowing=borrowing, payment=test, book=book)
+            payment = self.perform_create(serializer)
+            create_stripe_session(borrowing=borrowing, payment=payment, book=book)
         else:
             raise serializers.ValidationError("Payment already exists")
         return Response(serializer.data, status=status.HTTP_201_CREATED)

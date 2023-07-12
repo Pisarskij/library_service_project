@@ -1,8 +1,10 @@
 from django.test import TestCase
+
+from datetime import datetime, timedelta
+
 from book.models import Book
 from user.models import User
 from borrowing.models import Borrowing
-from datetime import datetime, timedelta
 
 
 class BorrowingTestCase(TestCase):
