@@ -54,7 +54,7 @@ python manage.py runserver
 ```
 You can now access the API at `http://127.0.0.1:8000/`.
 
-2. If you need to start Stripe listen (if you have another IP it can be change)
+2. You need to start Stripe listen to correctly Payment creation (if you have another IP it can be change)
 ```bash
 stripe listen --forward-to 127.0.0.1:8000/webhook
 ```
@@ -65,6 +65,10 @@ stripe listen --forward-to 127.0.0.1:8000/webhook
 ```bash
 python manage.py qcluster &
 ```
+
+## Payments
+
+- Stripe have test payments card. You can take it [here](https://stripe.com/docs/testing)
 
 
 ## API Documentation
