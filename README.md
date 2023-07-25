@@ -1,4 +1,4 @@
-## Library Service project based on Django Rest Framework API with Telegram Notifications and Stripe Payment Integration
+## Libra
 
 This repository contains a Library Service project based on Django Rest Framework API with integrates Telegram notifications and the Stripe payment system.
 
@@ -7,7 +7,7 @@ This repository contains a Library Service project based on Django Rest Framewor
 1. Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/Soobig666/library_service_project.git
+git clone https://github.com/Soobig666/libra.git
 ```
 
 2. Install the dependencies using the package manager `pip`:
